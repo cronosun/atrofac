@@ -312,7 +312,7 @@ mod tests {
     #[test]
     pub fn table_from_to_string() {
         let minimum_table_string = "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%";
-        let mut table =
+        let table =
             FanCurveTableBuilder::from_string(FanCurveDevice::Cpu, minimum_table_string).unwrap();
         assert_eq!(true, table.is_valid());
         // auto-fix should do nothing
@@ -325,8 +325,7 @@ mod tests {
     pub fn minimum_cpu_table() {
         let table_string = "0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%";
         let minimum_allowed = "30c:0%,40c:0%,50c:0%,60c:0%,70c:31%,80c:49%,90c:56%,100c:56%";
-        let mut table =
-            FanCurveTableBuilder::from_string(FanCurveDevice::Cpu, table_string).unwrap();
+        let table = FanCurveTableBuilder::from_string(FanCurveDevice::Cpu, table_string).unwrap();
         assert_eq!(false, table.is_valid());
         // should fix the table to minimum values
         let table = table.auto_fix_build();
@@ -338,8 +337,7 @@ mod tests {
     pub fn minimum_gpu_table() {
         let table_string = "0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%";
         let minimum_allowed = "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%";
-        let mut table =
-            FanCurveTableBuilder::from_string(FanCurveDevice::Gpu, table_string).unwrap();
+        let table = FanCurveTableBuilder::from_string(FanCurveDevice::Gpu, table_string).unwrap();
         assert_eq!(false, table.is_valid());
         // should fix the table to minimum values
         let table = table.auto_fix_build();

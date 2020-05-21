@@ -5,14 +5,11 @@ use std::ffi::OsStr;
 use std::iter::once;
 use std::os::windows::ffi::OsStrExt;
 use std::ptr::null_mut;
-use winapi::_core::mem::MaybeUninit;
-use winapi::_core::ptr::null;
 use winapi::ctypes::c_void;
 use winapi::um::errhandlingapi::GetLastError;
 use winapi::um::fileapi::CreateFileW;
 use winapi::um::handleapi::CloseHandle;
 use winapi::um::ioapiset::DeviceIoControl;
-use winapi::um::minwinbase::OVERLAPPED;
 use winapi::um::winnt::HANDLE;
 
 pub struct DeviceControl {
@@ -45,13 +42,13 @@ impl DeviceControl {
     pub fn control(
         &mut self,
         control_code: u32,
-        mut in_buffer: &mut [u8],
-        mut out_buffer: &mut [u8],
+        in_buffer: &mut [u8],
+        out_buffer: &mut [u8],
     ) -> Result<ControlResult, AfErr> {
         let in_buffer_size = u32::try_from(in_buffer.len())?;
         let out_buffer_size = u32::try_from(out_buffer.len())?;
         let mut out_buffer_written: u32 = 0;
-        let mut out_buffer_written_ref: &mut u32 = &mut out_buffer_written;
+        let out_buffer_written_ref: &mut u32 = &mut out_buffer_written;
 
         let in_buffer_c_void: *mut c_void = in_buffer as *mut _ as *mut c_void;
         let out_buffer_c_void: *mut c_void = out_buffer as *mut _ as *mut c_void;
@@ -101,4 +98,10 @@ impl Drop for DeviceControl {
 
 pub struct ControlResult {
     out_buffer_written: u32,
+}
+
+impl ControlResult {
+    pub fn out_buffer_written(&self) -> u32 {
+        self.out_buffer_written
+    }
 }

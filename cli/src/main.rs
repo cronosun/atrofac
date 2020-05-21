@@ -1,18 +1,67 @@
-use atrofac_library::{AtkAcpi, FanCurveDevice, FanCurveTable, PowerPlan};
+mod opts;
+
+use crate::opts::Opts;
+use atrofac_library::{AfErr, AtkAcpi, FanCurveDevice, FanCurveTable, FanCurveTableBuilder};
+use env_logger::Env;
+use log::info;
+use log::warn;
+use structopt::StructOpt;
+
+fn convert_to_curve(device: FanCurveDevice, string: &str) -> Result<FanCurveTable, AfErr> {
+    if string.trim().len() == 0 {
+        // the minimum table
+        Ok(FanCurveTableBuilder::from_string(
+            device,
+            "0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%",
+        )
+        .unwrap()
+        .auto_fix_build())
+    } else {
+        let builder_from_string = FanCurveTableBuilder::from_string(device, string)?;
+        let is_valid = builder_from_string.is_valid();
+        let table = builder_from_string.auto_fix_build();
+        if !is_valid {
+            warn!("Fan curve for {:?} might damage your device and has been auto-adjusted to the minimum safe values: {}.", device, table.to_string());
+        }
+        Ok(table)
+    }
+}
+
+fn perform(opt: Opts) -> Result<(), AfErr> {
+    match opt {
+        Opts::Plan(power_plan) => {
+            let mut atk = AtkAcpi::new()?;
+            atk.set_power_plan(power_plan.into())?;
+            Ok(())
+        }
+        Opts::Fan(fan) => {
+            let cpu = convert_to_curve(FanCurveDevice::Cpu, &fan.cpu)?;
+            let gpu = convert_to_curve(FanCurveDevice::Gpu, &fan.gpu)?;
+            let mut atk = AtkAcpi::new()?;
+            atk.set_power_plan(fan.plan.into())?;
+            atk.set_fan_curve(&cpu)?;
+            atk.set_fan_curve(&gpu)?;
+            Ok(())
+        }
+    }
+}
 
 fn main() {
+    env_logger::from_env(Env::default().default_filter_or("info")).init();
+
+    let opt = Opts::from_args();
+    if let Err(error) = perform(opt) {
+        warn!("Unable to perform operation: {:?}", error);
+        std::process::exit(exitcode::CONFIG);
+    } else {
+        info!("Success.");
+        std::process::exit(exitcode::OK);
+    }
+
     /*let mut atk = AtkAcpi::new().unwrap();
-    atk.set_power_plan(PowerPlan::TurboManual).unwrap();
-    let cpu_table: FanCurveTable = [
-        0x1e, 0x2c, 0x32, 0x45, 0x4e, 0x59, 0x63, 0x64, 0x00, 0x00, 0x00, 0x00, 0x20, 0x32, 0x39,
-        0x39,
-    ]
-    .into();
-    let gpu_table: FanCurveTable = [
-        0x1e, 0x2c, 0x32, 0x3d, 0x46, 0x50, 0x5a, 0x64, 0x00, 0x00, 0x00, 0x00, 0x19, 0x1c, 0x22,
-        0x28,
-    ]
-    .into();
-    atk.set_fan_curve(FanCurveDevice::Cpu, &cpu_table).unwrap();
-    atk.set_fan_curve(FanCurveDevice::Gpu, &gpu_table).unwrap();*/
+    atk.set_power_plan(PowerPlan::Silent).unwrap();
+    let cpu_table = FanCurveTableBuilder::from_string(FanCurveDevice::Cpu, "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%").unwrap().auto_fix_build();
+    let gpu_table = FanCurveTableBuilder::from_string(FanCurveDevice::Gpu, "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%").unwrap().auto_fix_build();
+    atk.set_fan_curve(&cpu_table).unwrap();
+    atk.set_fan_curve(&gpu_table).unwrap();*/
 }
