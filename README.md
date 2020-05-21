@@ -1,6 +1,6 @@
 # atrofac
 
-A library and a command line application to control the power plan, and the fan curve (CPU & GPU) of Asus Zephyrus G14 Devices (might also work with other devices that use the Armoury Crate Service). Fanless mode is possible as long as the GPU & CPU temperatures are not too hot (even on battery). 
+A library and a command line application to control the power plan, and the fan curve (CPU & GPU) of Asus Zephyrus G14 devices (might also work with other devices that use the Armoury Crate Service). Fanless mode is possible as long as the GPU & CPU temperatures are not too hot (even on battery). 
 
 ## WARING / DISCLAIMER
 
@@ -58,7 +58,7 @@ The `FAN_CURVE` is basically the same you can do graphically in the Armoury Crat
 | 4 | 70 | 35% |
 | 5 | 80 | 55% |
 | 6 | 90 | 65% |
-| 6 | 100 | 65% |
+| 7 | 100 | 65% |
 
 ... in this case the `FAN_CURVE` string would look like this: `30c:0%,40c:5%,50c:10%,60c:20%,70c:35%,80c:55%,90c:65%,100c:65%`.
 
@@ -91,7 +91,7 @@ autrofac will automatically adjust dangerous fan curves (**NO GUARANTEE THAT THI
 | 6 | 90..99 | 56% or higher | 61% or higher |
 | 6 | 100..109 | 56% or higher | 61% or higher |
 
-So it's possible to operate the Zephyrus G14 fanless as long as the temperatures of the GPU & CPU are below 59 degrees celsius. 
+So it's possible to operate the Zephyrus G14 fanless as long as the temperatures of the GPU & CPU are below 69 degrees celsius. 
 
 ## GUI
 
