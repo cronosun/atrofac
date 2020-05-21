@@ -1,5 +1,5 @@
 [package]
-name = "atrofac_library"
+name = "atrofac-library"
 version = "0.1.0"
 authors = ["caelis <simon.ruoss@gmail.com>"]
 edition = "2018"

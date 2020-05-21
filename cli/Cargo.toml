@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "atrofac-cli"
 version = "0.1.0"
 authors = ["caelis <simon.ruoss@gmail.com>"]
 edition = "2018"
@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-atrofac_library = {path = "../library"}
+atrofac-library = {path = "../library"}
 structopt = "0.3"
 exitcode = "1.1"
 log = "0.4"

@@ -19,7 +19,18 @@ dependencies = [
 ]
 
 [[package]]
-name = "atrofac_library"
+name = "atrofac-cli"
+version = "0.1.0"
+dependencies = [
+ "atrofac-library",
+ "env_logger",
+ "exitcode",
+ "log",
+ "structopt",
+]
+
+[[package]]
+name = "atrofac-library"
 version = "0.1.0"
 dependencies = [
  "log",
@@ -63,17 +74,6 @@ dependencies = [
  "textwrap",
  "unicode-width",
  "vec_map",
-]
-
-[[package]]
-name = "cli"
-version = "0.1.0"
-dependencies = [
- "atrofac_library",
- "env_logger",
- "exitcode",
- "log",
- "structopt",
 ]
 
 [[package]]
