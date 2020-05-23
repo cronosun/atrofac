@@ -1,5 +1,5 @@
 [workspace]
 
 members = [
-    "library", "cli"
+    "library", "cli", "gui", "libgui"
 ]

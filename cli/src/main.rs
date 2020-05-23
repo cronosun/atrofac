@@ -57,11 +57,4 @@ fn main() {
         info!("Success.");
         std::process::exit(exitcode::OK);
     }
-
-    /*let mut atk = AtkAcpi::new().unwrap();
-    atk.set_power_plan(PowerPlan::Silent).unwrap();
-    let cpu_table = FanCurveTableBuilder::from_string(FanCurveDevice::Cpu, "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%").unwrap().auto_fix_build();
-    let gpu_table = FanCurveTableBuilder::from_string(FanCurveDevice::Gpu, "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%").unwrap().auto_fix_build();
-    atk.set_fan_curve(&cpu_table).unwrap();
-    atk.set_fan_curve(&gpu_table).unwrap();*/
 }

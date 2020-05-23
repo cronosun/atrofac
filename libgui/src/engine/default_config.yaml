@@ -1,0 +1,24 @@
+active_plan: "Silent (Fanless)"
+plans:
+  - name: "Silent (Fanless)"
+    plan: "silent"
+    update_interval_sec: 30
+    cpu_curve: "30c:0%,40c:0%,50c:0%,60c:0%,70c:31%,80c:49%,90c:56%,100c:56%"
+    gpu_curve: "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%"
+  - name: "Silent (Low-Speed-Fan)"
+    plan: "silent"
+    update_interval_sec: 30
+    cpu_curve: "30c:0%,40c:5%,50c:10%,60c:10%,70c:31%,80c:49%,90c:56%,100c:56%"
+    gpu_curve: "30c:0%,40c:5%,50c:10%,60c:10%,70c:34%,80c:51%,90c:61%,100c:61%"
+  - name: "Silent (Default-Fan-Speed)"
+    plan: "silent"
+    update_interval_sec: 120
+  - name: "Windows"
+    plan: "windows"
+    update_interval_sec: 120
+  - name: "Performance"
+    plan: "performance"
+    update_interval_sec: 120
+  - name: "Turbo"
+    plan: "turbo"
+    update_interval_sec: 120

@@ -1,4 +1,7 @@
+use core::fmt;
 use std::borrow::Cow;
+use std::fmt::Display;
+use winapi::_core::fmt::Formatter;
 use winapi::_core::num::TryFromIntError;
 
 #[derive(Debug)]
@@ -17,6 +20,12 @@ impl From<&'static str> for AfErr {
         Self {
             msg: Cow::Borrowed(string),
         }
+    }
+}
+
+impl Display for AfErr {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.msg)
     }
 }
 
