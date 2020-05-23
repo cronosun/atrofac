@@ -1,12 +1,14 @@
-use crate::system::{MenuItem, MenuItemIdx, MenuItemState, SystemEvent, SystemInterface};
-use crate::systray::{Application, SystrayAction, SystrayError};
-use atrofac_library::AfErr;
-use msgbox::IconType;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use std::process::Command;
-
 use std::time::Duration;
+
+use msgbox::IconType;
+
+use atrofac_library::AfErr;
+
+use crate::system::{MenuItem, MenuItemIdx, MenuItemState, SystemEvent, SystemInterface};
+use crate::systray::{Application, SystrayAction, SystrayError};
 
 pub struct SystemImpl {
     app: Application,
@@ -39,7 +41,6 @@ impl SystemInterface for SystemImpl {
                 match string_menu_item.state {
                     MenuItemState::Default => {}
                     MenuItemState::Checked => {
-                        // TODO
                         map_err(self.app.window.select_menu_item(index))?;
                     }
                 }

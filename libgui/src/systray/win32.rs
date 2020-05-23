@@ -806,7 +806,7 @@ impl Window {
             let hicon = unsafe {
                 user32::CreateIconFromResourceEx(
                     icon_data.as_ptr() as PBYTE,
-                    buffer.len() as u32-offset as u32,
+                    buffer.len() as u32 - offset as u32,
                     TRUE,
                     0x30000,
                     width as i32,

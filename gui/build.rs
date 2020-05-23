@@ -13,5 +13,4 @@ fn main() {
 
 // nothing to do for other operating systems
 #[cfg(not(target_os = "windows"))]
-fn main() {
-}
+fn main() {}
