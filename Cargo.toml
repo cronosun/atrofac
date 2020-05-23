@@ -3,3 +3,6 @@
 members = [
     "library", "cli", "gui", "libgui"
 ]
+
+[profile.release]
+opt-level = "z"

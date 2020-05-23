@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use atrofac_libgui::engine::Engine;
 use atrofac_libgui::system::{
     new_system_interface, MenuItem, MenuItemIdx, MenuItemState, StringMenuItem, SystemEvent,
@@ -116,6 +118,7 @@ fn run_main_with_error(
     apply(engine, system)?;
     load_tray(engine, system)?;
     system.tray_tooltip("Control fan curve and power profile for Asus Zephyrus ROG G14.")?;
+    system.tray_icon(include_bytes!("../resources/icon.ico"), 64, 64)?;
 
     // loop
     loop {

@@ -1,11 +1,11 @@
 use crate::system::{MenuItem, MenuItemIdx, MenuItemState, SystemEvent, SystemInterface};
-use crate::systray::{Application, SystrayAction, SystrayError, SystrayEvent};
+use crate::systray::{Application, SystrayAction, SystrayError};
 use atrofac_library::AfErr;
 use msgbox::IconType;
 use std::convert::TryFrom;
 use std::path::PathBuf;
 use std::process::Command;
-use std::sync::mpsc;
+
 use std::time::Duration;
 
 pub struct SystemImpl {
