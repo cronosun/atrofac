@@ -13,17 +13,18 @@ use std::time::Duration;
 const MENU_ITEM_RELOAD_CONFIG_OFFSET: usize = 1;
 const MENU_ITEM_EDIT_CONFIG_OFFSET: usize = 2;
 const MENU_ITEM_EDIT_EXIT_OFFSET: usize = 3;
-const DEFAULT_INTERVAL_SEC: u32 = 120;
 
 fn apply(engine: &mut Engine, system: &mut impl SystemInterface) -> Result<(), AfErr> {
     engine.apply()?;
 
     // set the timer
     if let Some(active_plan) = engine.active_plan() {
-        let interval_secs = active_plan
-            .update_interval_sec
-            .unwrap_or(DEFAULT_INTERVAL_SEC);
-        system.set_timer(Duration::from_secs(interval_secs as u64))?;
+        if let Some(refresh_interval_sec) = active_plan
+            .refresh_interval_sec {
+            system.set_timer(Duration::from_secs(refresh_interval_sec as u64))?;
+        } else {
+            system.remove_timer()?;
+        }
     }
     Ok(())
 }

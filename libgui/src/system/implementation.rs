@@ -71,6 +71,10 @@ impl SystemInterface for SystemImpl {
         Ok(())
     }
 
+    fn remove_timer(&mut self) -> Result<(), AfErr> {
+        map_err(self.app.window.remove_timer())
+    }
+
     fn edit(&self, file: &PathBuf) -> Result<(), AfErr> {
         Command::new("notepad.exe")
             .args(&[file.as_os_str()])

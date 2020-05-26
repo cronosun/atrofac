@@ -18,6 +18,7 @@ pub trait SystemInterface {
 
     fn show_err_message(&mut self, title: &str, text: &str) -> Result<(), AfErr>;
     fn set_timer(&mut self, duration: Duration) -> Result<(), AfErr>;
+    fn remove_timer(&mut self) -> Result<(), AfErr>;
 
     /// Opens the (system) editor to edit the given file.
     fn edit(&self, file: &PathBuf) -> Result<(), AfErr>;

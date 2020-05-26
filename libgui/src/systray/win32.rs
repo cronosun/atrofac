@@ -13,7 +13,7 @@ use std::slice;
 use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use std::thread;
 use user32;
-use user32::SetTimer;
+use user32::{SetTimer, KillTimer};
 use winapi;
 use winapi::minwindef::{DWORD, HINSTANCE, LPARAM, LRESULT, PBYTE, TRUE, WPARAM};
 use winapi::windef::{HBITMAP, HBRUSH, HICON, HMENU, HWND};
@@ -594,6 +594,11 @@ impl Window {
 
     pub fn set_timer(&mut self, milliseconds: u32) -> Result<(), SystrayError> {
         unsafe { SetTimer(self.info.hwnd, TIMER1, milliseconds, None) };
+        Ok(())
+    }
+
+    pub fn remove_timer(&mut self) -> Result<(), SystrayError> {
+        unsafe { KillTimer(self.info.hwnd, TIMER1) };
         Ok(())
     }
 

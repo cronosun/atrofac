@@ -48,7 +48,7 @@ impl<'de> Deserialize<'de> for PlanName {
 pub struct Plan {
     pub name: PlanName,
     pub plan: PowerPlan,
-    pub update_interval_sec: Option<u32>,
+    pub refresh_interval_sec: Option<u32>,
     pub cpu_curve: Option<String>,
     pub gpu_curve: Option<String>,
 }
