@@ -139,11 +139,11 @@ impl FanCurveTable {
 
             // fix degrees
             let mut degrees = entry.degrees();
-            if degrees < index.min_degrees_inclusive() {
-                degrees = index.min_degrees_inclusive();
-            }
             if degrees > index.max_degrees_inclusive() {
                 degrees = index.max_degrees_inclusive();
+            }
+            if degrees < index.min_degrees_inclusive() {
+                degrees = index.min_degrees_inclusive();
             }
 
             // fix percentage
@@ -226,7 +226,8 @@ impl FanCurveTableBuilder {
 
             return Err(format!(
                 "Unable to parse '{}': It must look like this: \
-            <DEGREES>c:<PERCENT>%, examples: 35c:45% or 55c:75%.",
+            <DEGREES>c:<PERCENT>%, examples: 35c:45% or 55c:75% (while degrees must be \
+            <=255 and percent within 0-100).",
                 pattern
             )
             .into());
@@ -310,8 +311,8 @@ mod tests {
     use crate::{FanCurveDevice, FanCurveTableBuilder};
 
     #[test]
-    pub fn table_from_to_string() {
-        let minimum_table_string = "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%";
+    pub fn minimum_cpu_table_temp_given() {
+        let minimum_table_string = "39c:0%,49c:0%,59c:0%,69c:0%,79c:31%,89c:49%,99c:56%,109c:56%";
         let table =
             FanCurveTableBuilder::from_string(FanCurveDevice::Cpu, minimum_table_string).unwrap();
         assert_eq!(true, table.is_valid());
@@ -322,9 +323,21 @@ mod tests {
     }
 
     #[test]
+    pub fn minimum_gpu_table_temp_given() {
+        let minimum_table_string = "39c:0%,49c:0%,59c:0%,69c:0%,79c:34%,89c:51%,99c:61%,109c:61%";
+        let table =
+            FanCurveTableBuilder::from_string(FanCurveDevice::Gpu, minimum_table_string).unwrap();
+        assert_eq!(true, table.is_valid());
+        // auto-fix should do nothing
+        let table = table.auto_fix_build();
+        // should return the same
+        assert_eq!(table.to_string(), minimum_table_string);
+    }
+
+    #[test]
     pub fn minimum_cpu_table() {
-        let table_string = "0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%";
-        let minimum_allowed = "30c:0%,40c:0%,50c:0%,60c:0%,70c:31%,80c:49%,90c:56%,100c:56%";
+        let table_string = "150c:0%,150c:0%,150c:0%,150c:0%,150c:0%,150c:0%,150c:0%,150c:0%";
+        let minimum_allowed = "39c:0%,49c:0%,59c:0%,69c:0%,79c:31%,89c:49%,99c:56%,109c:56%";
         let table = FanCurveTableBuilder::from_string(FanCurveDevice::Cpu, table_string).unwrap();
         assert_eq!(false, table.is_valid());
         // should fix the table to minimum values
@@ -335,8 +348,8 @@ mod tests {
 
     #[test]
     pub fn minimum_gpu_table() {
-        let table_string = "0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%,0c:0%";
-        let minimum_allowed = "30c:0%,40c:0%,50c:0%,60c:0%,70c:34%,80c:51%,90c:61%,100c:61%";
+        let table_string = "150c:0%,150c:0%,150c:0%,150c:0%,150c:0%,150c:0%,150c:0%,150c:0%";
+        let minimum_allowed = "39c:0%,49c:0%,59c:0%,69c:0%,79c:34%,89c:51%,99c:61%,109c:61%";
         let table = FanCurveTableBuilder::from_string(FanCurveDevice::Gpu, table_string).unwrap();
         assert_eq!(false, table.is_valid());
         // should fix the table to minimum values
