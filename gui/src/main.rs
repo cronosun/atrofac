@@ -166,6 +166,7 @@ fn run_main(engine: &mut Engine, system: &mut impl SystemInterface) {
 }
 
 fn main() {
+    env_logger::init();
     let mut system = new_system_interface().expect("Unable to create system interface");
     let mut engine = Engine::new().expect("Unable to create engine.");
     run_main(&mut engine, &mut system);

@@ -60,6 +60,7 @@ version = "0.1.0"
 dependencies = [
  "atrofac-libgui",
  "atrofac-library",
+ "env_logger",
  "log",
  "winres",
 ]

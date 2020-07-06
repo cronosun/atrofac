@@ -128,6 +128,7 @@ impl Engine {
             }
             Ok(ApplyInfo::Ok)
         } else {
+            warn!("No active plan found (cannot apply plan).");
             Ok(ApplyInfo::NoPlan)
         }
     }
