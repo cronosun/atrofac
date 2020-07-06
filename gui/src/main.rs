@@ -109,6 +109,8 @@ fn on_tray(
         }
     } else {
         // it's a plan
+        // first re-load the configuration (in case user has edited the file; prevents overwriting the file).
+        engine.load_configuration()?;
         if let Some(plan_name) = engine.plan_by_index(menu_item_id.id() as usize).cloned() {
             info!("User selected plan {} in system tray.", plan_name.as_str());
             engine.set_active_plan(plan_name);
