@@ -1,7 +1,6 @@
 use crate::systray::{make_callback, Callback, SystrayAction, SystrayError, SystrayEvent};
 use encoding::all::UTF_16LE;
 use encoding::{EncoderTrap, Encoding};
-use kernel32;
 use log::debug;
 use std;
 use std::cell::{Cell, RefCell};
@@ -12,17 +11,34 @@ use std::ptr::{null, null_mut};
 use std::slice;
 use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use std::thread;
-use user32;
-use user32::{SetTimer, KillTimer};
 use winapi;
-use winapi::minwindef::{DWORD, HINSTANCE, LPARAM, LRESULT, PBYTE, TRUE, WPARAM};
-use winapi::windef::{HBITMAP, HBRUSH, HICON, HMENU, HWND};
-use winapi::winnt::LPCWSTR;
-use winapi::winuser::{CW_USEDEFAULT, LR_DEFAULTCOLOR, WNDCLASSW, WS_OVERLAPPEDWINDOW};
-use winapi::{
-    c_int, BOOL, CHAR, GUID, LPMENUITEMINFOA, LPMENUITEMINFOW, MENUITEMINFOW, RECT, UINT, UINT_PTR,
-    ULONG_PTR, WCHAR,
+use winapi::shared::minwindef::{DWORD, HINSTANCE, LPARAM, LRESULT, PBYTE, TRUE, WPARAM};
+use winapi::shared::windef::{HBITMAP, HBRUSH, HICON, HMENU, HWND};
+use winapi::um::winuser::{CW_USEDEFAULT, LR_DEFAULTCOLOR, WNDCLASSW, WS_OVERLAPPEDWINDOW, SetTimer, KillTimer, WM_MENUCOMMAND, WM_TIMER, WM_POWERBROADCAST, WM_UNINITMENUPOPUP, WM_USER, WM_LBUTTONUP, WM_RBUTTONUP, GetCursorPos, SetForegroundWindow, WM_DESTROY, PostQuitMessage, DefWindowProcW, LoadIconW, LoadCursorW, IDI_APPLICATION, CreateWindowExW, CreatePopupMenu, RegisterClassW, GetMessageW, WM_QUIT, TranslateMessage, DispatchMessageW, PostMessageW, CheckMenuItem, EnableMenuItem, InsertMenuItemW, DeleteMenu, LoadImageW, LookupIconIdFromDirectoryEx, CreateIconFromResourceEx, IMAGE_ICON, LR_LOADFROMFILE};
+use winapi::um::winuser::{
+    LPMENUITEMINFOA, LPMENUITEMINFOW, MENUITEMINFOW
 };
+use winapi::um::libloaderapi::GetModuleHandleA;
+use winapi::shared::basetsd::{
+     UINT_PTR,
+    ULONG_PTR,
+};
+use winapi::shared::guiddef::GUID;
+use  winapi::um::winnt::CHAR;
+use winapi::shared::windef::POINT;
+use winapi::shared::minwindef::{
+BOOL, UINT,
+};
+use winapi::shared::windef::{
+    RECT,
+};
+use winapi::um::winuser::MSG;
+use winapi::um::errhandlingapi::GetLastError;
+use winapi::ctypes::c_int;
+use winapi::um::winnt::LPCWSTR;
+use winapi::ctypes::c_ulong;
+use winapi::ctypes::c_ushort;
+use winapi::um::winnt::WCHAR;
 
 const TIMER1: UINT_PTR = 323523;
 
@@ -52,7 +68,7 @@ macro_rules! STRUCT {
         impl Clone for $name { fn clone(&self) -> $name { *self } }
     };
     {$(#[$attrs:meta])* struct $name:ident { $($field:ident: $ftype:ty,)+ }} => {
-        #[repr(C)] #[derive(Debug)] $(#[$attrs])*
+        #[repr(C)] $(#[$attrs])*
         pub struct $name {
             $(pub $field: $ftype,)+
         }
@@ -289,7 +305,7 @@ struct WindowsLoopData {
 }
 
 unsafe fn get_win_os_error(msg: &str) -> SystrayError {
-    SystrayError::OsError(format!("{}: {}", &msg, kernel32::GetLastError()))
+    SystrayError::OsError(format!("{}: {}", &msg, GetLastError()))
 }
 
 unsafe extern "system" fn window_proc(
@@ -298,7 +314,7 @@ unsafe extern "system" fn window_proc(
     w_param: WPARAM,
     l_param: LPARAM,
 ) -> LRESULT {
-    if msg == winapi::winuser::WM_MENUCOMMAND {
+    if msg == WM_MENUCOMMAND {
         WININFO_STASH.with(|stash| {
             let stash = stash.borrow();
             let stash = stash.as_ref();
@@ -317,7 +333,7 @@ unsafe extern "system" fn window_proc(
         });
     }
 
-    if msg == winapi::winuser::WM_TIMER {
+    if msg == WM_TIMER {
         if w_param == TIMER1 {
             WININFO_STASH.with(|stash| {
                 let stash = stash.borrow();
@@ -335,7 +351,25 @@ unsafe extern "system" fn window_proc(
         }
     }
 
-    if msg == winapi::winuser::WM_UNINITMENUPOPUP {
+    if msg == WM_POWERBROADCAST {
+        if w_param == winapi::um::winuser::PBT_APMRESUMEAUTOMATIC {
+            WININFO_STASH.with(|stash| {
+                let stash = stash.borrow();
+                let stash = stash.as_ref();
+                if let Some(stash) = stash {
+                    stash
+                        .tx
+                        .send(SystrayEvent {
+                            action: SystrayAction::ApmResume,
+                            menu_index: 0,
+                        })
+                        .ok();
+                }
+            });
+        }
+    }
+
+    if msg == WM_UNINITMENUPOPUP {
         WININFO_STASH.with(|stash| {
             let stash = stash.borrow();
             let stash = stash.as_ref();
@@ -351,15 +385,15 @@ unsafe extern "system" fn window_proc(
         });
     }
 
-    if msg == winapi::winuser::WM_USER + 1 {
-        if l_param as UINT == winapi::winuser::WM_LBUTTONUP
-            || l_param as UINT == winapi::winuser::WM_RBUTTONUP
+    if msg == WM_USER + 1 {
+        if l_param as UINT == WM_LBUTTONUP
+            || l_param as UINT == WM_RBUTTONUP
         {
-            let mut p = winapi::POINT { x: 0, y: 0 };
-            if user32::GetCursorPos(&mut p as *mut winapi::POINT) == 0 {
+            let mut p = POINT { x: 0, y: 0 };
+            if GetCursorPos(&mut p as *mut POINT) == 0 {
                 return 1;
             }
-            user32::SetForegroundWindow(h_wnd);
+            SetForegroundWindow(h_wnd);
             WININFO_STASH.with(|stash| {
                 let stash = stash.borrow();
                 let stash = stash.as_ref();
@@ -384,7 +418,7 @@ unsafe extern "system" fn window_proc(
             });
         }
     }
-    if msg == winapi::winuser::WM_DESTROY {
+    if msg == WM_DESTROY {
         WININFO_STASH.with(|stash| {
             let stash = stash.borrow();
             let stash = stash.as_ref();
@@ -398,9 +432,9 @@ unsafe extern "system" fn window_proc(
                     .ok();
             }
         });
-        user32::PostQuitMessage(0);
+        PostQuitMessage(0);
     }
-    return user32::DefWindowProcW(h_wnd, msg, w_param, l_param);
+    return DefWindowProcW(h_wnd, msg, w_param, l_param);
 }
 
 fn get_nid_struct(hwnd: &HWND) -> NOTIFYICONDATAW {
@@ -418,10 +452,10 @@ fn get_nid_struct(hwnd: &HWND) -> NOTIFYICONDATAW {
         uTimeout: 0 as UINT,
         szInfoTitle: [0 as u16; 64],
         dwInfoFlags: 0 as UINT,
-        guidItem: winapi::GUID {
-            Data1: 0 as winapi::c_ulong,
-            Data2: 0 as winapi::c_ushort,
-            Data3: 0 as winapi::c_ushort,
+        guidItem: GUID {
+            Data1: 0 as c_ulong,
+            Data2: 0 as c_ushort,
+            Data3: 0 as c_ushort,
             Data4: [0; 8],
         },
         hBalloonIcon: 0 as HICON,
@@ -429,8 +463,8 @@ fn get_nid_struct(hwnd: &HWND) -> NOTIFYICONDATAW {
 }
 
 fn get_menu_item_struct() -> MENUITEMINFOW {
-    winapi::MENUITEMINFOW {
-        cbSize: std::mem::size_of::<winapi::MENUITEMINFOW>() as UINT,
+    MENUITEMINFOW {
+        cbSize: std::mem::size_of::<MENUITEMINFOW>() as UINT,
         fMask: 0 as UINT,
         fType: 0 as UINT,
         fState: 0 as UINT,
@@ -438,7 +472,7 @@ fn get_menu_item_struct() -> MENUITEMINFOW {
         hSubMenu: 0 as HMENU,
         hbmpChecked: 0 as HBITMAP,
         hbmpUnchecked: 0 as HBITMAP,
-        dwItemData: 0 as winapi::ULONG_PTR,
+        dwItemData: 0 as ULONG_PTR,
         dwTypeData: std::ptr::null_mut(),
         cch: 0 as u32,
         hbmpItem: 0 as HBITMAP,
@@ -447,23 +481,23 @@ fn get_menu_item_struct() -> MENUITEMINFOW {
 
 unsafe fn init_window() -> Result<WindowInfo, SystrayError> {
     let class_name = to_wstring("my_window");
-    let hinstance: HINSTANCE = kernel32::GetModuleHandleA(std::ptr::null_mut());
+    let hinstance: HINSTANCE = GetModuleHandleA(std::ptr::null_mut());
     let wnd = WNDCLASSW {
         style: 0,
         lpfnWndProc: Some(window_proc),
         cbClsExtra: 0,
         cbWndExtra: 0,
         hInstance: 0 as HINSTANCE,
-        hIcon: user32::LoadIconW(0 as HINSTANCE, winapi::winuser::IDI_APPLICATION),
-        hCursor: user32::LoadCursorW(0 as HINSTANCE, winapi::winuser::IDI_APPLICATION),
+        hIcon: LoadIconW(0 as HINSTANCE, IDI_APPLICATION),
+        hCursor: LoadCursorW(0 as HINSTANCE, IDI_APPLICATION),
         hbrBackground: 16 as HBRUSH,
         lpszMenuName: 0 as LPCWSTR,
         lpszClassName: class_name.as_ptr(),
     };
-    if user32::RegisterClassW(&wnd) == 0 {
+    if RegisterClassW(&wnd) == 0 {
         return Err(get_win_os_error("Error creating window class"));
     }
-    let hwnd = user32::CreateWindowExW(
+    let hwnd = CreateWindowExW(
         0,
         class_name.as_ptr(),
         to_wstring("rust_systray_window").as_ptr(),
@@ -482,13 +516,13 @@ unsafe fn init_window() -> Result<WindowInfo, SystrayError> {
     }
     let mut nid = get_nid_struct(&hwnd);
     nid.uID = 0x1;
-    nid.uFlags = winapi::NIF_MESSAGE;
-    nid.uCallbackMessage = winapi::WM_USER + 1;
-    if Shell_NotifyIconW(winapi::NIM_ADD, &mut nid as *mut NOTIFYICONDATAW) == 0 {
+    nid.uFlags = NIF_MESSAGE;
+    nid.uCallbackMessage = WM_USER + 1;
+    if Shell_NotifyIconW(NIM_ADD, &mut nid as *mut NOTIFYICONDATAW) == 0 {
         return Err(get_win_os_error("Error adding menu icon"));
     }
     // Setup menu
-    let hmenu = user32::CreatePopupMenu();
+    let hmenu = CreatePopupMenu();
     let m = MENUINFO {
         cbSize: std::mem::size_of::<MENUINFO>() as DWORD,
         fMask: MIM_APPLYTOSUBMENUS | MIM_STYLE,
@@ -496,7 +530,7 @@ unsafe fn init_window() -> Result<WindowInfo, SystrayError> {
         cyMax: 0 as UINT,
         hbrBack: 0 as HBRUSH,
         dwContextHelpID: 0 as DWORD,
-        dwMenuData: 0 as winapi::ULONG_PTR,
+        dwMenuData: 0 as ULONG_PTR,
     };
     if SetMenuInfo(hmenu, &m as *const MENUINFO) == 0 {
         return Err(get_win_os_error("Error setting up menu"));
@@ -512,21 +546,21 @@ unsafe fn init_window() -> Result<WindowInfo, SystrayError> {
 unsafe fn run_loop() {
     debug!("Running windows loop");
     // Run message loop
-    let mut msg = winapi::winuser::MSG {
+    let mut msg = MSG {
         hwnd: 0 as HWND,
         message: 0 as UINT,
         wParam: 0 as WPARAM,
         lParam: 0 as LPARAM,
         time: 0 as DWORD,
-        pt: winapi::windef::POINT { x: 0, y: 0 },
+        pt: POINT { x: 0, y: 0 },
     };
     loop {
-        user32::GetMessageW(&mut msg, 0 as HWND, 0, 0);
-        if msg.message == winapi::winuser::WM_QUIT {
+        GetMessageW(&mut msg, 0 as HWND, 0, 0);
+        if msg.message == WM_QUIT {
             break;
         }
-        user32::TranslateMessage(&mut msg);
-        user32::DispatchMessageW(&mut msg);
+        TranslateMessage(&mut msg);
+        DispatchMessageW(&mut msg);
     }
     debug!("Leaving windows run loop");
 }
@@ -588,7 +622,7 @@ impl Window {
 
     pub fn quit(&self) {
         unsafe {
-            user32::PostMessageW(self.info.hwnd, winapi::WM_DESTROY, 0 as WPARAM, 0 as LPARAM);
+            PostMessageW(self.info.hwnd, WM_DESTROY, 0 as WPARAM, 0 as LPARAM);
         }
     }
 
@@ -616,9 +650,9 @@ impl Window {
             nid.szTip[i] = utf16[i];
         }
         nid.szTip[127] = 0; // NUL-terminate
-        nid.uFlags = winapi::NIF_TIP;
+        nid.uFlags = NIF_TIP;
         unsafe {
-            if Shell_NotifyIconW(winapi::NIM_MODIFY, &mut nid as *mut NOTIFYICONDATAW) == 0 {
+            if Shell_NotifyIconW(NIM_MODIFY, &mut nid as *mut NOTIFYICONDATAW) == 0 {
                 return Err(get_win_os_error("Error setting tooltip"));
             }
         }
@@ -627,7 +661,7 @@ impl Window {
 
     pub fn select_menu_item(&self, item: u32) -> Result<u32, SystrayError> {
         unsafe {
-            if user32::CheckMenuItem(self.info.hmenu, item, MF_BYPOSITION | MF_CHECKED) as i32 == -1
+            if CheckMenuItem(self.info.hmenu, item, MF_BYPOSITION | MF_CHECKED) as i32 == -1
             {
                 return Err(get_win_os_error("Menu item does not exist (cannot check)"));
             }
@@ -643,7 +677,7 @@ impl Window {
                 MenuEnableFlag::Grayed => MF_GRAYED,
             };
         unsafe {
-            if user32::EnableMenuItem(self.info.hmenu, item, flags) == 0 {
+            if EnableMenuItem(self.info.hmenu, item, flags) == 0 {
                 return Err(get_win_os_error("Error enabling menu item"));
             }
         }
@@ -652,7 +686,7 @@ impl Window {
 
     pub fn unselect_menu_item(&self, item: u32) -> Result<u32, SystrayError> {
         unsafe {
-            if user32::CheckMenuItem(self.info.hmenu, item, MF_BYPOSITION | MF_UNCHECKED) == 0 {
+            if CheckMenuItem(self.info.hmenu, item, MF_BYPOSITION | MF_UNCHECKED) == 0 {
                 return Err(get_win_os_error("Error unchecking menu item"));
             }
         }
@@ -673,11 +707,11 @@ impl Window {
         item.dwTypeData = st.as_mut_ptr();
         item.cch = (item_name.len() * 2) as u32;
         unsafe {
-            if user32::InsertMenuItemW(
+            if InsertMenuItemW(
                 self.info.hmenu,
                 idx,
                 1,
-                &item as *const winapi::MENUITEMINFOW,
+                &item as *const MENUITEMINFOW,
             ) == 0
             {
                 return Err(get_win_os_error("Error inserting menu item"));
@@ -694,11 +728,11 @@ impl Window {
         item.fType = MFT_SEPARATOR;
         item.wID = idx;
         unsafe {
-            if user32::InsertMenuItemW(
+            if InsertMenuItemW(
                 self.info.hmenu,
                 idx,
                 1,
-                &item as *const winapi::MENUITEMINFOW,
+                &item as *const MENUITEMINFOW,
             ) == 0
             {
                 return Err(get_win_os_error("Error inserting separator"));
@@ -731,7 +765,7 @@ impl Window {
         let mut idx = self.menu_idx.get();
         unsafe {
             while idx > 0 {
-                if user32::DeleteMenu(self.info.hmenu, idx - 1, MF_BYPOSITION) == 0 {
+                if DeleteMenu(self.info.hmenu, idx - 1, MF_BYPOSITION) == 0 {
                     return Err(get_win_os_error("Error clearing menu"));
                 }
                 idx = idx - 1;
@@ -744,9 +778,9 @@ impl Window {
     fn set_icon(&self, icon: HICON) -> Result<(), SystrayError> {
         unsafe {
             let mut nid = get_nid_struct(&self.info.hwnd);
-            nid.uFlags = winapi::NIF_ICON;
+            nid.uFlags = NIF_ICON;
             nid.hIcon = icon;
-            if Shell_NotifyIconW(winapi::NIM_MODIFY, &mut nid as *mut NOTIFYICONDATAW) == 0 {
+            if Shell_NotifyIconW(NIM_MODIFY, &mut nid as *mut NOTIFYICONDATAW) == 0 {
                 return Err(get_win_os_error("Error setting icon"));
             }
         }
@@ -756,10 +790,10 @@ impl Window {
     pub fn set_icon_from_resource(&self, resource_name: &String) -> Result<(), SystrayError> {
         let icon;
         unsafe {
-            icon = user32::LoadImageW(
+            icon = LoadImageW(
                 self.info.hinstance,
                 to_wstring(&resource_name).as_ptr(),
-                winapi::IMAGE_ICON,
+                IMAGE_ICON,
                 64,
                 64,
                 0,
@@ -775,13 +809,13 @@ impl Window {
         let wstr_icon_file = to_wstring(&icon_file);
         let hicon;
         unsafe {
-            hicon = user32::LoadImageW(
+            hicon = LoadImageW(
                 std::ptr::null_mut() as HINSTANCE,
                 wstr_icon_file.as_ptr(),
-                winapi::IMAGE_ICON,
+                IMAGE_ICON,
                 64,
                 64,
-                winapi::LR_LOADFROMFILE,
+                LR_LOADFROMFILE,
             ) as HICON;
             if hicon == std::ptr::null_mut() as HICON {
                 return Err(get_win_os_error("Error setting icon from file"));
@@ -797,7 +831,7 @@ impl Window {
         height: u32,
     ) -> Result<(), SystrayError> {
         let offset = unsafe {
-            user32::LookupIconIdFromDirectoryEx(
+            LookupIconIdFromDirectoryEx(
                 buffer.as_ptr() as PBYTE,
                 TRUE,
                 width as i32,
@@ -809,7 +843,7 @@ impl Window {
         if offset != 0 {
             let icon_data = &buffer[offset as usize..];
             let hicon = unsafe {
-                user32::CreateIconFromResourceEx(
+                CreateIconFromResourceEx(
                     icon_data.as_ptr() as PBYTE,
                     buffer.len() as u32 - offset as u32,
                     TRUE,
@@ -837,8 +871,8 @@ impl Window {
     pub fn shutdown(&self) -> Result<(), SystrayError> {
         unsafe {
             let mut nid = get_nid_struct(&self.info.hwnd);
-            nid.uFlags = winapi::NIF_ICON;
-            if Shell_NotifyIconW(winapi::NIM_DELETE, &mut nid as *mut NOTIFYICONDATAW) == 0 {
+            nid.uFlags = NIF_ICON;
+            if Shell_NotifyIconW(NIM_DELETE, &mut nid as *mut NOTIFYICONDATAW) == 0 {
                 return Err(get_win_os_error("Error deleting icon from menu"));
             }
         }

@@ -17,6 +17,7 @@ pub enum SystrayAction {
     HideMenu,
     Timer,
     Quit,
+    ApmResume,
 }
 
 pub struct SystrayEvent {

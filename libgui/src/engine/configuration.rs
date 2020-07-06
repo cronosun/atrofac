@@ -16,31 +16,12 @@ impl Default for Configuration {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash)]
-pub struct PlanName(Rc<String>);
+#[derive(Clone, Debug, Eq, PartialEq, Hash,Serialize, Deserialize)]
+pub struct PlanName(Rc<str>);
 
 impl PlanName {
     pub fn as_str(&self) -> &str {
-        self.0.as_str()
-    }
-}
-
-impl Serialize for PlanName {
-    fn serialize<S>(&self, serializer: S) -> Result<<S as Serializer>::Ok, <S as Serializer>::Error>
-    where
-        S: Serializer,
-    {
-        serializer.serialize_str(self.0.as_str())
-    }
-}
-
-impl<'de> Deserialize<'de> for PlanName {
-    fn deserialize<D>(deserializer: D) -> Result<Self, <D as Deserializer<'de>>::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        let string = String::deserialize(deserializer)?;
-        Ok(Self(Rc::new(string)))
+        &self.0
     }
 }
 
@@ -49,6 +30,7 @@ pub struct Plan {
     pub name: PlanName,
     pub plan: PowerPlan,
     pub refresh_interval_sec: Option<u32>,
+    pub refresh_on_apm_resume_automatic: Option<bool>,
     pub cpu_curve: Option<String>,
     pub gpu_curve: Option<String>,
 }

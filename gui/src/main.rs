@@ -6,6 +6,7 @@ use atrofac_libgui::system::{
     SystemInterface,
 };
 use atrofac_library::AfErr;
+use log::info;
 use std::borrow::Cow;
 use std::convert::TryFrom;
 use std::time::Duration;
@@ -15,15 +16,28 @@ const MENU_ITEM_EDIT_CONFIG_OFFSET: usize = 2;
 const MENU_ITEM_EDIT_EXIT_OFFSET: usize = 3;
 
 fn apply(engine: &mut Engine, system: &mut impl SystemInterface) -> Result<(), AfErr> {
+    info!("Going to re-apply the plan due to timer event.");
     engine.apply()?;
 
     // set the timer
     if let Some(active_plan) = engine.active_plan() {
-        if let Some(refresh_interval_sec) = active_plan
-            .refresh_interval_sec {
+        if let Some(refresh_interval_sec) = active_plan.refresh_interval_sec {
             system.set_timer(Duration::from_secs(refresh_interval_sec as u64))?;
         } else {
             system.remove_timer()?;
+        }
+    }
+    Ok(())
+}
+
+fn on_apm_resume_automatic(engine: &mut Engine) -> Result<(), AfErr> {
+    // Check whether we need to do something (stored in the configuration)
+    if let Some(active_plan) = engine.active_plan() {
+        // default value is "true"
+        let refresh_on_resume = active_plan.refresh_on_apm_resume_automatic.unwrap_or(true);
+        if refresh_on_resume {
+            info!("Going to re-apply the plan due to wakeup (PBT_APMRESUMEAUTOMATIC).");
+            engine.apply()?;
         }
     }
     Ok(())
@@ -131,6 +145,9 @@ fn run_main_with_error(
                 }
                 SystemEvent::OnTray(menu_item_id) => {
                     on_tray(menu_item_id, engine, system)?;
+                }
+                SystemEvent::OnApmResume => {
+                    on_apm_resume_automatic(engine)?;
                 }
             }
         } else {

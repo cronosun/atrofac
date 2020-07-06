@@ -57,6 +57,7 @@ pub struct StringMenuItem<'a> {
 pub enum SystemEvent {
     OnTimer,
     OnTray(MenuItemIdx),
+    OnApmResume,
 }
 
 pub enum MenuItemState {

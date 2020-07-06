@@ -101,6 +101,7 @@ An entry for a plan looks like this:
  * `cpu_curve`: CPU fan curve, see [ADVANCED.md](ADVANCED.md).
  * `gpu_curve`: GPU fan curve, see [ADVANCED.md](ADVANCED.md).
  * `refresh_interval_sec` (optional): Armoury crate will overwrite the changes made by atrofac eventually (usually when waking up from sleep; when going from AC to DC or vice versa). So atrofac will periodically apply the settings every n seconds. It has been renamed from `update_interval_sec` to make sure it's gone when somebody updates the app and keeps the old configuration. Why: see "end user documentation".
+ * `refresh_on_apm_resume_automatic` (optional; default value is `true`): If this is true, atrofac will re-apply the plan after resuming from sleep or hibernation. You usually want this to be `true`. (technical detail: see Win32 API `PBT_APMRESUMEAUTOMATIC`).  
  
 You can also omit `cpu_curve` and `gpu_curve` in that case the default fan curves (as defined by Asus) are used. 
 

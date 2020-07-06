@@ -108,6 +108,7 @@ impl SystemInterface for SystemImpl {
                 SystrayAction::Quit => {
                     return Ok(None);
                 }
+                SystrayAction::ApmResume => return Ok(Some(SystemEvent::OnApmResume)),
             };
         }
     }
