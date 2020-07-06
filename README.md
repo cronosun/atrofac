@@ -8,9 +8,7 @@ A GUI, a library and a command line application to control the power plan, and t
 
 ## State
 
-This is a very early proof of concept:
-
-Needs to be tested on other devices than just mine (firmware `GA401IU.212`, Ryzen 7 4800HS, GeForce GTX 1660 Ti). According to reddit it seems to work for others too: [https://www.reddit.com/r/ZephyrusG14/comments/go16hp/fanless_completely_silent_on_battery_manual_fan/](https://www.reddit.com/r/ZephyrusG14/comments/go16hp/fanless_completely_silent_on_battery_manual_fan/).
+Has been in use for more than a month (end of may 2020 - early july 2020) and works with some minor flaws (see reddit for details and read this documentation). This is my G14 model: firmware `GA401IU.212`, Ryzen 7 4800HS, GeForce GTX 1660 Ti.  According to reddit it seems to work for other users too (and even other notebook models): [https://www.reddit.com/r/ZephyrusG14/comments/go16hp/fanless_completely_silent_on_battery_manual_fan/](https://www.reddit.com/r/ZephyrusG14/comments/go16hp/fanless_completely_silent_on_battery_manual_fan/).
 
 ## Getting started (end user documentation)
 
