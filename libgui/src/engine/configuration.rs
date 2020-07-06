@@ -1,4 +1,4 @@
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use std::rc::Rc;
 
 #[derive(Serialize, Deserialize, Clone, Debug, Eq, PartialEq)]
