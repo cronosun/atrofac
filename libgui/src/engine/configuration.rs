@@ -5,6 +5,10 @@ use std::rc::Rc;
 pub struct Configuration {
     pub active_plan: Option<PlanName>,
     pub plans: Vec<Plan>,
+    /// default value is "false".
+    pub disable_logging: Option<bool>,
+    /// log specification. Default value is "info" (other meaningful values are "debug").
+    pub log_spec: Option<String>,
 }
 
 impl Default for Configuration {
@@ -12,6 +16,8 @@ impl Default for Configuration {
         Configuration {
             active_plan: None,
             plans: Default::default(),
+            disable_logging: None,
+            log_spec: None,
         }
     }
 }

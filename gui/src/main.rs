@@ -16,7 +16,6 @@ const MENU_ITEM_EDIT_CONFIG_OFFSET: usize = 2;
 const MENU_ITEM_EDIT_EXIT_OFFSET: usize = 3;
 
 fn apply(engine: &mut Engine, system: &mut impl SystemInterface) -> Result<(), AfErr> {
-    info!("Going to re-apply the plan due to timer event.");
     engine.apply()?;
 
     // set the timer
@@ -93,6 +92,7 @@ fn on_tray(
                 engine.load_configuration()?;
                 load_tray(engine, system)?;
                 apply(engine, system)?;
+                info!("Plan applied due to configuration file reload.");
                 Ok(())
             }
             MENU_ITEM_EDIT_CONFIG_OFFSET => {
@@ -101,6 +101,7 @@ fn on_tray(
                 Ok(())
             }
             MENU_ITEM_EDIT_EXIT_OFFSET => {
+                info!("Quitting atrofac (user selected quit from menu).");
                 system.quit()?;
                 Ok(())
             }
@@ -109,6 +110,7 @@ fn on_tray(
     } else {
         // it's a plan
         if let Some(plan_name) = engine.plan_by_index(menu_item_id.id() as usize).cloned() {
+            info!("User selected plan {} in system tray.", plan_name.as_str());
             engine.set_active_plan(plan_name);
             // when the plan has been changed, save the configuration
             engine.save_configuration()?;
@@ -131,6 +133,7 @@ fn run_main_with_error(
 ) -> Result<(), AfErr> {
     engine.load_configuration()?;
     apply(engine, system)?;
+    info!("Plan initially applied while application startup.");
     load_tray(engine, system)?;
     system.tray_tooltip("Control fan curve and power profile for Asus Zephyrus ROG G14.")?;
     system.tray_icon(include_bytes!("../resources/icon.ico"), 64, 64)?;
@@ -142,6 +145,9 @@ fn run_main_with_error(
             match event {
                 SystemEvent::OnTimer => {
                     apply(engine, system)?;
+                    info!(
+                        "Plan successfully re-applied due to timer event ('refresh_interval_sec')."
+                    );
                 }
                 SystemEvent::OnTray(menu_item_id) => {
                     on_tray(menu_item_id, engine, system)?;
@@ -166,7 +172,6 @@ fn run_main(engine: &mut Engine, system: &mut impl SystemInterface) {
 }
 
 fn main() {
-    env_logger::init();
     let mut system = new_system_interface().expect("Unable to create system interface");
     let mut engine = Engine::new().expect("Unable to create engine.");
     run_main(&mut engine, &mut system);

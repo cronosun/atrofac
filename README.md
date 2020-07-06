@@ -103,6 +103,13 @@ An entry for a plan looks like this:
  
 You can also omit `cpu_curve` and `gpu_curve` in that case the default fan curves (as defined by Asus) are used. 
 
+## Binaries
+
+There's no CI yet, but there are prebuilt binaries:
+
+ * GUI: [atrofac-gui.exe](bin/atrofac-gui.exe)
+ * CLI-tool: [atrofac-cli.exe](bin/atrofac-cli.exe)
+
 ## Advanced
 
 See [ADVANCED.md](ADVANCED.md) if you need more information such as:
@@ -112,10 +119,10 @@ See [ADVANCED.md](ADVANCED.md) if you need more information such as:
  * Technical information.
  * Fan-curve details.
  
-## Binaries
-
-There's no CI yet, but there are prebuilt binaries:
-
- * GUI: [atrofac-gui.exe](bin/atrofac-gui.exe)
- * CLI-tool: [atrofac-cli.exe](bin/atrofac-cli.exe)
+### Logs
+ 
+Log files are written to `C:\Users\<USERNAME>\AppData\Local\atrofac_logs`. These files are deleted automatically after a few days. There are two options in the config file (top level section) related to logging:
+ 
+ * `disable_logging`: Set this to `true` to disable logging (it's `false` by default).
+ * `log_spec`: A string; log specification. By default it's `info`; See [https://docs.rs/flexi_logger/0.15.7/flexi_logger/struct.LogSpecification.html](https://docs.rs/flexi_logger/0.15.7/flexi_logger/struct.LogSpecification.html) for details. 
 

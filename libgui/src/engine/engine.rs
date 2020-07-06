@@ -2,7 +2,7 @@ use std::fs::{File, OpenOptions};
 use std::io::{BufReader, BufWriter, Write};
 use std::path::PathBuf;
 
-use dirs::config_dir;
+use dirs::{config_dir, data_local_dir};
 use indexmap::map::IndexMap;
 use log::info;
 use log::warn;
@@ -10,8 +10,12 @@ use log::warn;
 use atrofac_library::{AfErr, AtkAcpi, FanCurveDevice, FanCurveTable, FanCurveTableBuilder};
 
 use crate::engine::configuration::{Configuration, Plan, PlanName};
+use flexi_logger::{Age, Cleanup, Criterion, Logger, Naming};
+use std::fs;
 
+const DEFAULT_LOG_LEVEL: &str = "info";
 const CONFIG_FILE_NAME: &str = "atrofac_gui_config.yaml";
+const ATROFAC_LOG_DIR: &str = "atrofac_logs";
 
 pub struct Engine {
     configuration: Configuration,
@@ -22,11 +26,13 @@ pub struct Engine {
 impl Engine {
     pub fn new() -> Result<Self, AfErr> {
         let config_file = Self::require_config_file_path_buf()?;
-        Ok(Self {
+        let engine = Self {
             configuration: Default::default(),
             plans: Default::default(),
             config_file,
-        })
+        };
+        engine.start_logging()?;
+        Ok(engine)
     }
 
     pub fn load_configuration(&mut self) -> Result<(), AfErr> {
@@ -37,6 +43,7 @@ impl Engine {
             self.set_configuration(configuration);
             // save the configuration right now (so the user has a template to edit).
             self.save_configuration()?;
+            info!("Created a new configuration file (since there was none).");
             Ok(())
         } else {
             let file = File::open(path_buf.as_path()).map_err(|err| {
@@ -50,6 +57,7 @@ impl Engine {
             let configuration = serde_yaml::from_reader(buffered_reader)
                 .map_err(|err| AfErr::from(format!("Configuration file is invalid: {}.", err)))?;
             self.set_configuration(configuration);
+            info!("Configuration file successfully (re-)loaded.");
             Ok(())
         }
     }
@@ -73,6 +81,7 @@ impl Engine {
         }
         file.flush()
             .map_err(|err| AfErr::from(format!("Unable to flush file: {}", err)))?;
+        info!("Configuration file successfully saved (modified configuration file).");
         Ok(())
     }
 
@@ -166,6 +175,48 @@ impl Engine {
         for plan in &self.configuration.plans {
             self.plans.insert(plan.name.clone(), plan.clone());
         }
+    }
+
+    fn start_logging(&self) -> Result<(), AfErr> {
+        let disable_logging = self.configuration.disable_logging.unwrap_or(false);
+        if !disable_logging {
+            let log_spec: &str = if let Some(log_spec) = &self.configuration.log_spec {
+                &log_spec
+            } else {
+                DEFAULT_LOG_LEVEL
+            };
+            Logger::with_env_or_str(log_spec)
+                .log_to_file()
+                .directory(self.log_directory()?)
+                .rotate(
+                    Criterion::Age(Age::Day),
+                    Naming::Timestamps,
+                    Cleanup::KeepLogFiles(7),
+                )
+                // no background thread. This would just waste resources; for atrofac it's no problem if cleanup blocks.
+                .cleanup_in_background_thread(false)
+                .start()
+                .map_err(|log_err| AfErr::from(format!("Unable to start logger: {}", log_err)))?;
+            info!("atrofac started.");
+            Ok(())
+        } else {
+            Ok(())
+        }
+    }
+
+    fn log_directory(&self) -> Result<PathBuf, AfErr> {
+        let mut log_dir = data_local_dir().ok_or_else(|| {
+            AfErr::from("Unable to determine data local dir (used to store log files).")
+        })?;
+        log_dir.push(ATROFAC_LOG_DIR);
+        fs::create_dir_all(&log_dir).map_err(|error| {
+            AfErr::from(format!(
+                "Unable to create log directory '{:?}'; \
+            error: {}.",
+                &log_dir, error
+            ))
+        })?;
+        Ok(log_dir)
     }
 }
 

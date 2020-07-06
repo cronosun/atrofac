@@ -14,12 +14,10 @@ dirs = "2.0"
 serde_yaml = "0.8"
 indexmap = "1.3"
 msgbox = "0.4.0"
+flexi_logger = { version = "0.15", features = ["specfile", "ziplogs"] }
 
 # things required for systray
 [target.'cfg(windows)'.dependencies]
-#winapi="0.2"
-#user32-sys="0.2"
-#kernel32-sys="0.2"
 libc="0.2"
 encoding="0.2.33"
 winapi = { version = "0.3", features = ["winuser", "minwinbase", "basetsd"] }
