@@ -12,33 +12,32 @@ use std::slice;
 use std::sync::mpsc::{channel, Receiver, Sender, TryRecvError};
 use std::thread;
 use winapi;
-use winapi::shared::minwindef::{DWORD, HINSTANCE, LPARAM, LRESULT, PBYTE, TRUE, WPARAM};
-use winapi::shared::windef::{HBITMAP, HBRUSH, HICON, HMENU, HWND};
-use winapi::um::winuser::{CW_USEDEFAULT, LR_DEFAULTCOLOR, WNDCLASSW, WS_OVERLAPPEDWINDOW, SetTimer, KillTimer, WM_MENUCOMMAND, WM_TIMER, WM_POWERBROADCAST, WM_UNINITMENUPOPUP, WM_USER, WM_LBUTTONUP, WM_RBUTTONUP, GetCursorPos, SetForegroundWindow, WM_DESTROY, PostQuitMessage, DefWindowProcW, LoadIconW, LoadCursorW, IDI_APPLICATION, CreateWindowExW, CreatePopupMenu, RegisterClassW, GetMessageW, WM_QUIT, TranslateMessage, DispatchMessageW, PostMessageW, CheckMenuItem, EnableMenuItem, InsertMenuItemW, DeleteMenu, LoadImageW, LookupIconIdFromDirectoryEx, CreateIconFromResourceEx, IMAGE_ICON, LR_LOADFROMFILE};
-use winapi::um::winuser::{
-    LPMENUITEMINFOA, LPMENUITEMINFOW, MENUITEMINFOW
-};
-use winapi::um::libloaderapi::GetModuleHandleA;
-use winapi::shared::basetsd::{
-     UINT_PTR,
-    ULONG_PTR,
-};
-use winapi::shared::guiddef::GUID;
-use  winapi::um::winnt::CHAR;
-use winapi::shared::windef::POINT;
-use winapi::shared::minwindef::{
-BOOL, UINT,
-};
-use winapi::shared::windef::{
-    RECT,
-};
-use winapi::um::winuser::MSG;
-use winapi::um::errhandlingapi::GetLastError;
 use winapi::ctypes::c_int;
-use winapi::um::winnt::LPCWSTR;
 use winapi::ctypes::c_ulong;
 use winapi::ctypes::c_ushort;
+use winapi::shared::basetsd::{UINT_PTR, ULONG_PTR};
+use winapi::shared::guiddef::GUID;
+use winapi::shared::minwindef::{BOOL, UINT};
+use winapi::shared::minwindef::{DWORD, HINSTANCE, LPARAM, LRESULT, PBYTE, TRUE, WPARAM};
+use winapi::shared::windef::POINT;
+use winapi::shared::windef::RECT;
+use winapi::shared::windef::{HBITMAP, HBRUSH, HICON, HMENU, HWND};
+use winapi::um::errhandlingapi::GetLastError;
+use winapi::um::libloaderapi::GetModuleHandleA;
+use winapi::um::winnt::CHAR;
+use winapi::um::winnt::LPCWSTR;
 use winapi::um::winnt::WCHAR;
+use winapi::um::winuser::MSG;
+use winapi::um::winuser::{
+    CheckMenuItem, CreateIconFromResourceEx, CreatePopupMenu, CreateWindowExW, DefWindowProcW,
+    DeleteMenu, DispatchMessageW, EnableMenuItem, GetCursorPos, GetMessageW, InsertMenuItemW,
+    KillTimer, LoadCursorW, LoadIconW, LoadImageW, LookupIconIdFromDirectoryEx, PostMessageW,
+    PostQuitMessage, RegisterClassW, SetForegroundWindow, SetTimer, TranslateMessage,
+    CW_USEDEFAULT, IDI_APPLICATION, IMAGE_ICON, LR_DEFAULTCOLOR, LR_LOADFROMFILE, WM_DESTROY,
+    WM_LBUTTONUP, WM_MENUCOMMAND, WM_POWERBROADCAST, WM_QUIT, WM_RBUTTONUP, WM_TIMER,
+    WM_UNINITMENUPOPUP, WM_USER, WNDCLASSW, WS_OVERLAPPEDWINDOW,
+};
+use winapi::um::winuser::{LPMENUITEMINFOA, LPMENUITEMINFOW, MENUITEMINFOW};
 
 const TIMER1: UINT_PTR = 323523;
 
@@ -386,9 +385,7 @@ unsafe extern "system" fn window_proc(
     }
 
     if msg == WM_USER + 1 {
-        if l_param as UINT == WM_LBUTTONUP
-            || l_param as UINT == WM_RBUTTONUP
-        {
+        if l_param as UINT == WM_LBUTTONUP || l_param as UINT == WM_RBUTTONUP {
             let mut p = POINT { x: 0, y: 0 };
             if GetCursorPos(&mut p as *mut POINT) == 0 {
                 return 1;
@@ -661,8 +658,7 @@ impl Window {
 
     pub fn select_menu_item(&self, item: u32) -> Result<u32, SystrayError> {
         unsafe {
-            if CheckMenuItem(self.info.hmenu, item, MF_BYPOSITION | MF_CHECKED) as i32 == -1
-            {
+            if CheckMenuItem(self.info.hmenu, item, MF_BYPOSITION | MF_CHECKED) as i32 == -1 {
                 return Err(get_win_os_error("Menu item does not exist (cannot check)"));
             }
         }
@@ -707,13 +703,7 @@ impl Window {
         item.dwTypeData = st.as_mut_ptr();
         item.cch = (item_name.len() * 2) as u32;
         unsafe {
-            if InsertMenuItemW(
-                self.info.hmenu,
-                idx,
-                1,
-                &item as *const MENUITEMINFOW,
-            ) == 0
-            {
+            if InsertMenuItemW(self.info.hmenu, idx, 1, &item as *const MENUITEMINFOW) == 0 {
                 return Err(get_win_os_error("Error inserting menu item"));
             }
         }
@@ -728,13 +718,7 @@ impl Window {
         item.fType = MFT_SEPARATOR;
         item.wID = idx;
         unsafe {
-            if InsertMenuItemW(
-                self.info.hmenu,
-                idx,
-                1,
-                &item as *const MENUITEMINFOW,
-            ) == 0
-            {
+            if InsertMenuItemW(self.info.hmenu, idx, 1, &item as *const MENUITEMINFOW) == 0 {
                 return Err(get_win_os_error("Error inserting separator"));
             }
         }

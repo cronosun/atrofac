@@ -16,7 +16,7 @@ impl Default for Configuration {
     }
 }
 
-#[derive(Clone, Debug, Eq, PartialEq, Hash,Serialize, Deserialize)]
+#[derive(Clone, Debug, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub struct PlanName(Rc<str>);
 
 impl PlanName {
