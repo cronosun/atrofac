@@ -10,7 +10,7 @@ use log::warn;
 use atrofac_library::{AfErr, AtkAcpi, FanCurveDevice, FanCurveTable, FanCurveTableBuilder};
 
 use crate::engine::configuration::{Configuration, Plan, PlanName};
-use flexi_logger::{Age, Cleanup, Criterion, Logger, Naming};
+use flexi_logger::{Age, Cleanup, Criterion, Logger, Naming, detailed_format};
 use std::fs;
 
 const DEFAULT_LOG_LEVEL: &str = "info";
@@ -124,8 +124,10 @@ impl Engine {
                 atk.set_fan_curve(&cpu)?;
                 atk.set_fan_curve(&gpu)?;
                 info!(
-                    "Power plan updated with custom fan curve: {:?}.",
-                    active_plan.plan
+                    "Power plan updated with custom fan curve: {:?}; CPU {}; GPU {}.",
+                    active_plan.plan,
+                    cpu.to_string(),
+                    gpu.to_string(),
                 );
             } else {
                 // plan only
@@ -195,6 +197,7 @@ impl Engine {
                 )
                 // no background thread. This would just waste resources; for atrofac it's no problem if cleanup blocks.
                 .cleanup_in_background_thread(false)
+                .format(detailed_format)
                 .start()
                 .map_err(|log_err| AfErr::from(format!("Unable to start logger: {}", log_err)))?;
             info!("atrofac started.");

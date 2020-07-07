@@ -1,3 +1,9 @@
+# 2020-07-07
+
+ * Profile adjustments:
+   * Profile *Silent (fanless)*: New values are `30c:0%,49c:0%,59c:0%,69c:0%,79c:31%,89c:49%,99c:56%,109c:56%` (cpu) / `30c:0%,49c:0%,59c:0%,69c:0%,79c:34%,89c:51%,99c:61%,109c:61%`. Note 30c vs. 39c!. **You need to manually adjust the configuration file or delete the configuration file (atrofac will then create a new configuration file with the new values).**
+ * Logging: Timestamp & log fan curve.
+
 # 2020-07-06
  
  * atrofac now re-applies the plan after wakeup (from sleep & hibernation); configurable (activated by default).
