@@ -92,8 +92,8 @@ An entry for a plan looks like this:
 ```yaml
   - name: Silent (Fanless)
     plan: silent
-    cpu_curve: "39c:0%,49c:0%,59c:0%,69c:0%,79c:31%,89c:49%,99c:56%,109c:56%"
-    gpu_curve: "39c:0%,49c:0%,59c:0%,69c:0%,79c:34%,89c:51%,99c:61%,109c:61%"
+    cpu_curve: "30c:0%,49c:0%,59c:0%,69c:0%,79c:31%,89c:49%,99c:56%,109c:56%"
+    gpu_curve: "30c:0%,49c:0%,59c:0%,69c:0%,79c:34%,89c:51%,99c:61%,109c:61%"
 ```
 
  * `name`: The name, obviously.
