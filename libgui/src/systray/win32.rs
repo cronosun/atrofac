@@ -576,8 +576,8 @@ impl Window {
         let (tx, rx) = channel();
         let (event_tx, event_rx) = channel();
         let windows_loop = thread::spawn(move || {
-            unsafe {
-                let i = init_window();
+            
+                let i = unsafe { init_window() };
                 let k;
                 match i {
                     Ok(j) => {
@@ -597,8 +597,8 @@ impl Window {
                     };
                     (*stash.borrow_mut()) = Some(data);
                 });
-                run_loop();
-            }
+                unsafe { run_loop() };
+            
         });
         let info = match rx.recv().unwrap() {
             Ok(i) => i,
@@ -747,23 +747,23 @@ impl Window {
 
     pub fn clear_menu(&self) -> Result<(), SystrayError> {
         let mut idx = self.menu_idx.get();
-        unsafe {
+        
             while idx > 0 {
-                if DeleteMenu(self.info.hmenu, idx - 1, MF_BYPOSITION) == 0 {
-                    return Err(get_win_os_error("Error clearing menu"));
+                if unsafe { DeleteMenu(self.info.hmenu, idx - 1, MF_BYPOSITION) == 0 } {
+                    return Err(unsafe { get_win_os_error("Error clearing menu") });
                 }
                 idx = idx - 1;
             }
             self.menu_idx.set(0);
-        }
+        
         Ok(())
     }
 
     fn set_icon(&self, icon: HICON) -> Result<(), SystrayError> {
+        let mut nid = get_nid_struct(&self.info.hwnd);
+        nid.uFlags = NIF_ICON;
+        nid.hIcon = icon;
         unsafe {
-            let mut nid = get_nid_struct(&self.info.hwnd);
-            nid.uFlags = NIF_ICON;
-            nid.hIcon = icon;
             if Shell_NotifyIconW(NIM_MODIFY, &mut nid as *mut NOTIFYICONDATAW) == 0 {
                 return Err(get_win_os_error("Error setting icon"));
             }
@@ -853,9 +853,9 @@ impl Window {
     }
 
     pub fn shutdown(&self) -> Result<(), SystrayError> {
+        let mut nid = get_nid_struct(&self.info.hwnd);
+        nid.uFlags = NIF_ICON;
         unsafe {
-            let mut nid = get_nid_struct(&self.info.hwnd);
-            nid.uFlags = NIF_ICON;
             if Shell_NotifyIconW(NIM_DELETE, &mut nid as *mut NOTIFYICONDATAW) == 0 {
                 return Err(get_win_os_error("Error deleting icon from menu"));
             }
