@@ -1,4 +1,6 @@
 #include "app.hpp"
+#include <fstream>
+#include <filesystem>
 
 fc::CurveEditor::CurveEditor(std::string name)
     : Fl_Flow(0, 0, 1, 1)
@@ -134,9 +136,43 @@ void fc::App::init()
 
     rule(ce.get(), "=v");
     rule(ge.get(), "=v");
+
+    std::filesystem::path cfg = "atrofac_gui_gui.config";
+    if (std::filesystem::exists(cfg))
+    {
+        std::fstream f;
+        f.open(cfg, std::ios::in);
+        f >> curr_profile;
+        f.get();
+
+        for (int i = 0; i < ce->curve->slices_ + 1; i++)
+        {
+            f >> ce->curve->table_[i];
+        }
+
+        for (int i = 0; i < ge->curve->slices_ + 1; i++)
+        {
+            f >> ge->curve->table_[i];
+        }
+    }
 }
 
-void fc::App::exit() {}
+void fc::App::exit()
+{
+    std::fstream f;
+    f.open("atrofac_gui_gui.config", std::ios::out);
+    f << curr_profile << "\n";
+
+    for (int i = 0; i < ce->curve->slices_ + 1; i++)
+    {
+        f << ce->curve->table_[i] << " ";
+    }
+
+    for (int i = 0; i < ge->curve->slices_ + 1; i++)
+    {
+        f << ge->curve->table_[i] << " ";
+    }
+}
 
 int fc::App::run(int argc, char** argv)
 {
