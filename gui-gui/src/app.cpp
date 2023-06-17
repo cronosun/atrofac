@@ -123,7 +123,7 @@ void fc::App::init()
         std::system(cmd.c_str());
     };
 
-    applied = std::make_unique<Fl_Hover_Ext<Fl_Button>>(0, 0, 1, 50, "Applied");
+    applied = std::make_unique<Fl_Hover_Ext<Fl_Button>>(0, 0, 1, 50, "Apply");
     applied->labelsize(sdpi(applied->labelsize()));
     applied->normal_box(fl_ext_box(BTN_UP_BOX));
     applied->down_box(fl_ext_box(BTN_DOWN_BOX));
