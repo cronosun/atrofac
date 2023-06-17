@@ -19,12 +19,27 @@
 
 namespace fc
 {
+    struct PlotGraph : public Fl_Widget
+    {
+        int slices_ = 0;
+        int* table_ = nullptr;
+
+        int thickness_ = 3;
+        int line_style_ = FL_SOLID;
+
+        PlotGraph(int slices, int x, int y, int w, int h);
+        ~PlotGraph();
+        void update_data();
+
+        int handle(int event) override;
+        void draw() override;
+    };
+
     class CurveEditor : public Fl_Flow
     {
-      private:
       public:
         std::unique_ptr<Fl_Hover_Ext<Fl_Toggle_Button>> applied;
-        std::unique_ptr<Fl_Ext<Fl_Value_Slider>> sliders[8];
+        std::unique_ptr<PlotGraph> curve;
         CurveEditor(std::string name);
     };
 
@@ -33,7 +48,7 @@ namespace fc
       private:
         std::string curr_profile = "windows";
         std::unique_ptr<Fl_Hover_Ext<Fl_Radio_Button>> profiles[4];
-        std::unique_ptr<Fl_Ext<Fl_Box>> temps[9];
+
         std::unique_ptr<CurveEditor> ce;
         std::unique_ptr<CurveEditor> ge;
         std::unique_ptr<Fl_Hover_Ext<Fl_Button>> applied;

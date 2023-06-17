@@ -13,18 +13,13 @@ fc::CurveEditor::CurveEditor(std::string name)
     add(applied.get());
     rule(applied.get(), "=<^");
 
-    for (int i = 0; i < 8; i++)
-    {
-        sliders[i] = std::make_unique<Fl_Ext<Fl_Value_Slider>>(0, 0, 1, 25);
-        sliders[i]->type(FL_HOR_FILL_SLIDER);
-        sliders[i]->slider(FL_FLAT_BOX);
-        sliders[i]->box(FL_FLAT_BOX);
-        sliders[i]->color(Fl_Ext_Color(0xF1F1F1));
-        sliders[i]->color2(Fl_Ext_Color(0xC1C1C1));
-        sliders[i]->textsize(sdpi(sliders[i]->textsize()));
-        add(sliders[i].get());
-        rule(sliders[i].get(), "=<^");
-    }
+    curve = std::make_unique<PlotGraph>(70, 0, 0, 1, 1);
+    curve->labelsize(sdpi(curve->labelsize()));
+    curve->thickness_ = sdpi(2);
+    curve->box(fl_ext_box(BTN_UP_BOX));
+    curve->color2(Fl_Ext_Color(0x005499));
+    add(curve.get());
+    rule(curve.get(), "=<=^");
 }
 
 fc::App::App(int W, int H, const char* title) //
@@ -69,24 +64,8 @@ void fc::App::init()
     add(ce.get());
     add(ge.get());
 
-    temps[0] = std::make_unique<Fl_Ext<Fl_Box>>(0, 0, 50, 25);
-    temps[0]->labelsize(sdpi(temps[0]->labelsize()));
-    temps[0]->box(FL_FLAT_BOX);
-    add(temps[0].get());
-    rule(temps[0].get(), "/<^");
-
-    for (int i = 1; i < 9; i++)
-    {
-        temps[i] = std::make_unique<Fl_Ext<Fl_Box>>(0, 0, 50, 25);
-        temps[i]->copy_label((std::to_string(30 + (i - 1) * 10) + "c").c_str());
-        temps[i]->labelsize(sdpi(temps[i]->labelsize()));
-        temps[i]->box(fl_ext_box(BTN_UP_BOX));
-        add(temps[i].get());
-        rule(temps[i].get(), "/<^");
-    }
-
-    rule(ce.get(), "<^=>");
-    rule(ge.get(), "^<=>");
+    rule(ce.get(), "<^/>=<");
+    rule(ge.get(), "^=<");
 
     static Flcb applied_func = [&](Fl_Widget* w)
     {
@@ -95,24 +74,38 @@ void fc::App::init()
 
         if (ce->applied->value() == true)
         {
-            std::string cpu_cmd = std::format(" --cpu 30c:{}%", int(ce->sliders[0]->value() * 100));
-            for (int i = 1; i < 8; i++)
+            std::string cpu_cmd = std::format(" --cpu ");
+            for (int i = 0; i < 7; i++)
             {
-                cpu_cmd += std::format(",{}c:{}%", 30 + i * 10, int(ce->sliders[i]->value() * 100));
+                int sum = 0;
+                for (int k = 0; k < 10; k++)
+                {
+                    sum += ce->curve->table_[i * 10 + k];
+                }
+                sum /= 10;
+                cpu_cmd += std::format("{}c:{}%,", 30 + i * 10, sum);
             }
+            cpu_cmd += std::format("{}c:{}%", 100, ce->curve->table_[ce->curve->slices_]);
             cmd += cpu_cmd;
         }
 
         if (ge->applied->value() == true)
         {
-            std::string gpu_cmd = std::format(" --gpu 30c:{}%", int(ge->sliders[0]->value() * 100));
-            for (int i = 1; i < 8; i++)
+            std::string gpu_cmd = std::format(" --gpu ");
+            for (int i = 0; i < 7; i++)
             {
-                gpu_cmd += std::format(",{}c:{}%", 30 + i * 10, int(ge->sliders[i]->value() * 100));
+                int sum = 0;
+                for (int k = 0; k < 10; k++)
+                {
+                    sum += ge->curve->table_[i * 10 + k];
+                }
+                sum /= 10;
+                gpu_cmd += std::format("{}c:{}%,", 30 + i * 10, sum);
             }
+            gpu_cmd += std::format("{}c:{}%", 100, ge->curve->table_[ge->curve->slices_]);
             cmd += gpu_cmd;
         }
-
+        
         std::system(cmd.c_str());
     };
 
@@ -135,4 +128,66 @@ int fc::App::run(int argc, char** argv)
 {
     show();
     return Fl::run();
+}
+
+fc::PlotGraph::PlotGraph(int slices, int x, int y, int w, int h)
+    : Fl_Widget(x, y, w, h),
+      slices_(slices)
+{
+    table_ = new int[slices + 1]{};
+}
+
+fc::PlotGraph::~PlotGraph()
+{
+    delete[] table_;
+}
+
+void fc::PlotGraph::update_data()
+{
+    int x_entry = (slices_ + 1) * (Fl::event_x() - x()) / float(w());
+    int y_entry = 100 - (100 + 1) * (Fl::event_y() - y()) / float(h());
+    x_entry = std::clamp(x_entry, 0, slices_);
+    y_entry = std::clamp(y_entry, 0, 100);
+    table_[x_entry] = y_entry;
+
+    copy_label(std::format("{}c, {}%", 30 + x_entry, y_entry).c_str());
+
+    redraw();
+}
+
+int fc::PlotGraph::handle(int event)
+{
+    switch (event)
+    {
+        case FL_DRAG:
+        {
+            update_data();
+            break;
+        }
+        case FL_PUSH:
+        {
+            update_data();
+            break;
+        }
+    }
+
+    return 1;
+}
+
+void fc::PlotGraph::draw()
+{
+    draw_box();
+
+    fl_color(color2());
+    fl_line_style(line_style_, thickness_);
+    fl_begin_line();
+    for (int i = 1; i < slices_ + 2; i++)
+    {
+        double vert_x = x() + (i * double(w()) / (slices_ + 2));
+        double vert_y = y() + h() * (1 - double(table_[i - 1]) / (100 + 2) - 0.01);
+        fl_vertex(vert_x, vert_y);
+    }
+    fl_end_line();
+
+    draw_label();
 }
