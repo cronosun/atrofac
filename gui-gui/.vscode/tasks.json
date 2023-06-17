@@ -1,0 +1,125 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "type": "shell",
+            "label": "Profile",
+            "detail": "Profiling using gprof",
+            "command": "gprof ${command:cmake.getLaunchTargetPath} | gprof2dot --node-label=self-time --node-label=total-time --node-label=total-time-percentage --node-label=self-time-percentage -c print -w | dot -Tpng -Nfontname=Consolas -o profile.png",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+            }
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: configure",
+            "command": "configure",
+            "problemMatcher": [],
+            "detail": "CMake template configure task",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "type": "cmake",
+            "label": "CMake: build",
+            "command": "build",
+            "targets": [
+                "all"
+            ],
+            "group": "build",
+            "problemMatcher": "$gcc",
+            "detail": "CMake template build task",
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false
+            }
+        },
+        {
+            "type": "shell",
+            "label": "add dlls info",
+            "detail": "add dlls info",
+            "command": "echo ldd \"${command:cmake.getLaunchTargetPath}\" ^| grep ucrt64 ^| awk '{print $3}' ^| xargs -i cp {} \"${command:cmake.getLaunchTargetDirectory}\" > ${command:cmake.getLaunchTargetDirectory}/dlls_info.txt",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+            }
+        },
+        {
+            "type": "shell",
+            "label": "copy dlls",
+            "detail": "copy dlls",
+            "command": "msys2 -ucrt64 < ${command:cmake.getLaunchTargetDirectory}/dlls_info.txt",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+            }
+        },
+        {
+            "type": "shell",
+            "label": "glslc",
+            "detail": "Compile vulkan shaders",
+            "command": "${workspaceFolder}/res/shader/shader.bat",
+            "problemMatcher": [],
+            "presentation": {
+                "echo": true,
+                "reveal": "silent",
+                "focus": false,
+                "panel": "shared",
+                "showReuseMessage": false,
+                "clear": false,
+            }
+        },
+        {
+            "type": "shell",
+            "label": "Build and copy",
+            "detail": "Build and copy",
+            "command": "",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "CMake: configure",
+                "CMake: build",
+                "add dlls info",
+                "copy dlls"
+            ]
+        },
+        {
+            "type": "shell",
+            "label": "Build",
+            "detail": "Build ",
+            "command": "",
+            "dependsOrder": "sequence",
+            "dependsOn": [
+                "CMake: configure",
+                "CMake: build"
+            ]
+        }
+    ]
+}

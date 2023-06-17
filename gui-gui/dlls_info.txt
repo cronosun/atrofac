@@ -1,0 +1,1 @@
+ldd "E:\work_space\atrofac\gui-gui\atrofac-gui-gui.exe" | grep ucrt64 | awk '{print $3}' | xargs -i cp {} "E:\work_space\atrofac\gui-gui" 

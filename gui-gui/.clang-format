@@ -1,0 +1,33 @@
+﻿---
+BasedOnStyle: Microsoft
+AlignAfterOpenBracket: Align
+AlignConsecutiveMacros: 'true'
+AlignEscapedNewlines: Left
+AllowShortFunctionsOnASingleLine: Inline
+SortIncludes: false
+NamespaceIndentation: All
+PointerAlignment: Left
+ColumnLimit: '120'
+IndentCaseLabels: 'true'
+AlwaysBreakTemplateDeclarations: 'Yes'
+PackConstructorInitializers: Never
+BraceWrapping: 
+  AfterCaseLabel: true
+  AfterClass: true
+  AfterControlStatement: true
+  AfterEnum: true
+  AfterFunction: true
+  AfterNamespace: true
+  AfterObjCDeclaration: true
+  AfterStruct: true
+  AfterUnion: true
+  AfterExternBlock: true
+  BeforeCatch: true
+  BeforeElse: true
+  IndentBraces: false
+  SplitEmptyFunction: true
+  SplitEmptyRecord: true
+  SplitEmptyNamespace: true
+  BeforeLambdaBody: true
+  BeforeWhile: true
+...
