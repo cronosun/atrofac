@@ -8,7 +8,7 @@ set(CMAKE_CXX_EXTENSIONS off)
 file(GLOB_RECURSE SRC src/*.cpp)
 
 # add files
-add_executable(atrofac-gui-gui main.cpp ${SRC})
+add_executable(atrofac-gui-gui WIN32 main.cpp ${SRC})
 
 include_directories(include)
 include_directories(ext_include)
