@@ -13,11 +13,25 @@ fc::CurveEditor::CurveEditor(std::string name)
     add(applied.get());
     rule(applied.get(), "=<^");
 
+    applied->attrib.callback(new std::function<void(Fl_Widget*)>(
+        [this](Fl_Widget* w)
+        {
+            if (!curve->active())
+            {
+                curve->activate();
+            }
+            else
+            {
+                curve->deactivate();
+            }
+        }));
+
     curve = std::make_unique<PlotGraph>(70, 0, 0, 1, 1);
     curve->labelsize(sdpi(curve->labelsize()));
     curve->thickness_ = sdpi(2);
     curve->box(fl_ext_box(BTN_UP_BOX));
     curve->color2(Fl_Ext_Color(0x005499));
+    curve->deactivate();
     add(curve.get());
     rule(curve.get(), "=<=^");
 }
@@ -105,7 +119,7 @@ void fc::App::init()
             gpu_cmd += std::format("{}c:{}%", 100, ge->curve->table_[ge->curve->slices_]);
             cmd += gpu_cmd;
         }
-        
+
         std::system(cmd.c_str());
     };
 
@@ -135,6 +149,7 @@ fc::PlotGraph::PlotGraph(int slices, int x, int y, int w, int h)
       slices_(slices)
 {
     table_ = new int[slices + 1]{};
+    copy_label(std::format("{}c, {}%", 0, 0).c_str());
 }
 
 fc::PlotGraph::~PlotGraph()
