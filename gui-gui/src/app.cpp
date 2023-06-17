@@ -15,10 +15,17 @@ fc::CurveEditor::CurveEditor(std::string name)
     add(applied.get());
     rule(applied.get(), "=<^");
 
+    curve = std::make_unique<PlotGraph>(70, 0, 0, 1, 1);
+    curve->labelsize(sdpi(curve->labelsize()));
+    curve->thickness_ = sdpi(2);
+    curve->box(fl_ext_box(BTN_UP_BOX));
+    curve->color2(Fl_Ext_Color(0x005499));
+    curve->deactivate();
+
     applied->attrib.callback(new std::function<void(Fl_Widget*)>(
-        [this](Fl_Widget* w)
+        [&](Fl_Widget* w)
         {
-            if (!curve->active())
+            if (applied->value())
             {
                 curve->activate();
             }
@@ -28,12 +35,6 @@ fc::CurveEditor::CurveEditor(std::string name)
             }
         }));
 
-    curve = std::make_unique<PlotGraph>(70, 0, 0, 1, 1);
-    curve->labelsize(sdpi(curve->labelsize()));
-    curve->thickness_ = sdpi(2);
-    curve->box(fl_ext_box(BTN_UP_BOX));
-    curve->color2(Fl_Ext_Color(0x005499));
-    curve->deactivate();
     add(curve.get());
     rule(curve.get(), "=<=^");
 }
@@ -68,7 +69,6 @@ void fc::App::init()
         profiles[i]->attrib.callback(profile_func);
         add(profiles[i].get());
     }
-    profiles[1]->value(1);
 
     rule(profiles[0].get(), "/<^=<");
     rule(profiles[1].get(), "^>=<");
@@ -121,6 +121,21 @@ void fc::App::init()
             gpu_cmd += std::format("{}c:{}%", 100, ge->curve->table_[ge->curve->slices_]);
             cmd += gpu_cmd;
         }
+        std::fstream f;
+        f.open("atrofac_gui_gui.config", std::ios::out);
+        f << curr_profile << "\n";
+
+        f << (int)ce->applied->value() << " ";
+        for (int i = 0; i < ce->curve->slices_ + 1; i++)
+        {
+            f << ce->curve->table_[i] << " ";
+        }
+
+        f << (int)ge->applied->value() << " ";
+        for (int i = 0; i < ge->curve->slices_ + 1; i++)
+        {
+            f << ge->curve->table_[i] << " ";
+        }
 
         std::system(cmd.c_str());
     };
@@ -136,7 +151,12 @@ void fc::App::init()
 
     rule(ce.get(), "=v");
     rule(ge.get(), "=v");
+}
 
+void fc::App::exit() {}
+
+int fc::App::run(int argc, char** argv)
+{
     std::filesystem::path cfg = "atrofac_gui_gui.config";
     if (std::filesystem::exists(cfg))
     {
@@ -144,38 +164,55 @@ void fc::App::init()
         f.open(cfg, std::ios::in);
         f >> curr_profile;
         f.get();
+        int tmp;
 
+        f >> tmp;
+        ce->applied->value(tmp);
+        (*ce->applied->callback())(ce->applied.get());
         for (int i = 0; i < ce->curve->slices_ + 1; i++)
         {
             f >> ce->curve->table_[i];
         }
 
+        f >> tmp;
+        ge->applied->value(tmp);
+        (*ge->applied->callback())(ge->applied.get());
         for (int i = 0; i < ge->curve->slices_ + 1; i++)
         {
             f >> ge->curve->table_[i];
         }
     }
-}
 
-void fc::App::exit()
-{
-    std::fstream f;
-    f.open("atrofac_gui_gui.config", std::ios::out);
-    f << curr_profile << "\n";
-
-    for (int i = 0; i < ce->curve->slices_ + 1; i++)
+    switch (curr_profile[0])
     {
-        f << ce->curve->table_[i] << " ";
+        case 's':
+        {
+            profiles[0]->value(1);
+            break;
+        }
+        case 'w':
+        {
+            profiles[1]->value(1);
+            break;
+        }
+        case 'p':
+        {
+            profiles[2]->value(1);
+            break;
+        }
+        case 't':
+        {
+            profiles[3]->value(1);
+            break;
+        }
     }
 
-    for (int i = 0; i < ge->curve->slices_ + 1; i++)
+    if (argc == 2)
     {
-        f << ge->curve->table_[i] << " ";
+        (*applied->callback())(applied.get());
+        return EXIT_SUCCESS;
     }
-}
 
-int fc::App::run(int argc, char** argv)
-{
     show();
     return Fl::run();
 }
@@ -185,7 +222,7 @@ fc::PlotGraph::PlotGraph(int slices, int x, int y, int w, int h)
       slices_(slices)
 {
     table_ = new int[slices + 1]{};
-    copy_label(std::format("{}c, {}%", 0, 0).c_str());
+    copy_label("Drag to change the curve!");
 }
 
 fc::PlotGraph::~PlotGraph()
